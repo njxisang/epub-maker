@@ -578,7 +578,7 @@ app.get('/api/books/:id/export', async (req, res) => {
 
     const coverId = `cover-image`;
     zip.addFile(`OEBPS/${meta.cover}`, coverContent);
-    imageManifest.push(`    <item id="${coverId}" href="${meta.cover}" media-type="${mimeType}"/>`);
+    imageManifest.push(`    <item id="${coverId}" href="${meta.cover}" media-type="${mimeType}" properties="cover-image"/>`);
   }
 
   const imagesManifest = imageManifest.length > 0 ? '\n' + imageManifest.join('\n') : '';
@@ -592,11 +592,12 @@ app.get('/api/books/:id/export', async (req, res) => {
     <dc:creator>${author}</dc:creator>
     <dc:language>${lang}</dc:language>
     <meta property="dcterms:modified">${now.split('.')[0]}Z</meta>
+    ${meta.cover && fs.existsSync(path.join(bookDir, meta.cover)) ? `<meta name="cover" content="cover-image"/>` : ''}
   </metadata>
   <manifest>
 ${manifest}
   </manifest>
-  <spine toc="ncx">
+  <spine ${meta.cover && fs.existsSync(path.join(bookDir, meta.cover)) ? 'toc="ncx" cover="cover-image"' : 'toc="ncx"'}>
 ${spineItems.join('\n')}
   </spine>
 </package>`;
@@ -649,79 +650,253 @@ ${navList}
 </html>`;
   zip.addFile('OEBPS/nav.xhtml', Buffer.from(navXhtml));
 
-  // 7. styles.css
-  const stylesCss = `body {
-  font-family: Georgia, serif;
-  line-height: 1.6;
-  margin: 1em;
+  // 7. styles.css - Professional publication quality
+  const stylesCss = `/* EPUB Publication Styles */
+@charset "UTF-8";
+
+/* Base settings */
+body {
+  font-family: "Source Han Serif SC", "Noto Serif CJK SC", "Source Han Serif CN", "Noto Serif CJK CN", "Source Han Serif TW", "Noto Serif CJK TW", "SimSun", "宋体", "Georgia", "Times New Roman", serif;
+  font-size: 1em;
+  line-height: 1.8;
+  margin: 0;
   padding: 0;
+  text-align: justify;
+  color: #333;
+  background-color: #fff;
 }
+
+/* Typography */
 h1, h2, h3, h4, h5, h6 {
+  font-family: "Source Han Sans SC", "Noto Sans CJK SC", "Source Han Sans CN", "Noto Sans CJK CN", "Microsoft YaHei", "微软雅黑", sans-serif;
+  font-weight: bold;
   margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.75em;
+  line-height: 1.4;
+  text-align: left;
+  color: #1a1a1a;
 }
-h1 { font-size: 2em; text-align: center; margin-bottom: 1em; }
-h2 { font-size: 1.5em; }
-h3 { font-size: 1.25em; }
-p { margin: 0.5em 0; text-align: justify; }
-pre {
-  background-color: #f5f5f5;
-  padding: 1em;
-  overflow-x: auto;
-  border-radius: 4px;
+
+h1 {
+  font-size: 1.8em;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1.5em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #e0e0e0;
 }
-code {
-  font-family: 'Courier New', monospace;
-  font-size: 0.9em;
+
+h2 {
+  font-size: 1.4em;
+  margin-top: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #eee;
 }
-.chapter-content > p:first-child {
+
+h3 {
+  font-size: 1.2em;
+  margin-top: 1.8em;
+}
+
+h4, h5, h6 {
+  font-size: 1.1em;
+  margin-top: 1.5em;
+}
+
+/* Paragraphs */
+p {
+  margin: 0.8em 0;
   text-indent: 2em;
 }
-.chapter-content > h1 + p,
-.chapter-content > h2 + p,
-.chapter-content > h3 + p {
+
+/* First paragraph after heading - no indent */
+h1 + p,
+h2 + p,
+h3 + p,
+h4 + p,
+h5 + p,
+h6 + p {
   text-indent: 0;
 }
-blockquote {
-  margin: 1em 2em;
-  padding-left: 1em;
-  border-left: 3px solid #ccc;
-  font-style: italic;
+
+/* First paragraph of chapter */
+.chapter-content > p:first-of-type {
+  text-indent: 0;
 }
+
+/* Code blocks */
+pre, code {
+  font-family: "SF Mono", "Cascadia Code", "Consolas", "Liberation Mono", "Menlo", "Courier New", monospace;
+}
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+code {
+  font-size: 0.9em;
+  background-color: #f3f3f3;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+
+/* Blockquotes */
+blockquote {
+  margin: 1.5em 2em;
+  padding: 0.5em 1em;
+  border-left: 3px solid #c0a080;
+  background-color: #faf8f5;
+  font-style: italic;
+  color: #555;
+}
+
+blockquote p {
+  margin: 0.5em 0;
+  text-indent: 0;
+}
+
+/* Lists */
+ul, ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+li {
+  margin: 0.5em 0;
+  line-height: 1.6;
+}
+
+/* Tables */
 table {
   border-collapse: collapse;
   width: 100%;
-  margin: 1em 0;
+  margin: 1.5em 0;
+  font-size: 0.95em;
 }
+
 th, td {
-  border: 1px solid #ddd;
-  padding: 0.5em;
+  border: 1px solid #d0d0d0;
+  padding: 0.6em 1em;
   text-align: left;
+  vertical-align: top;
 }
-th { background-color: #f5f5f5; }
+
+th {
+  background-color: #f5f3f0;
+  font-weight: bold;
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background-color: #fafaf8;
+}
+
+/* Images */
 img {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 1em auto;
+  margin: 1.5em auto;
 }
+
+/* Horizontal rules */
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 2em 0;
+}
+
+/* Footnotes */
 .footnotes {
-  border-top: 1px solid #ccc;
-  margin-top: 2em;
+  border-top: 2px solid #e0d8d0;
+  margin-top: 3em;
   padding-top: 1em;
-  font-size: 0.9em;
+  font-size: 0.85em;
+  color: #666;
 }
+
 .footnotes li {
-  margin: 0.5em 0;
+  margin: 0.8em 0;
 }
+
 sup a {
   text-decoration: none;
-  color: #0066cc;
+  color: #8b6914;
+  font-weight: bold;
+  padding: 0 0.2em;
 }
+
 footer {
   margin-top: 2em;
   padding-top: 1em;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #e0e0e0;
+  font-size: 0.9em;
+  color: #777;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: #8b6914;
+}
+
+/* Emphasis */
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+/* Small caps effect via CSS */
+.small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+}
+
+/* Poetry / verse formatting */
+.verse {
+  font-family: "Source Han Serif SC", "Noto Serif CJK SC", "SimSun", serif;
+  margin: 1.5em 0;
+  padding-left: 2em;
+}
+
+.verse p {
+  text-indent: -2em;
+  margin: 0.3em 0;
+  line-height: 1.6;
+}
+
+/* Chapter title page */
+.title-page {
+  text-align: center;
+  padding-top: 30%;
+}
+
+.title-page h1 {
+  font-size: 2.2em;
+  border: none;
+  margin-bottom: 0.5em;
+}
+
+.title-page .author {
+  font-size: 1.2em;
+  margin-top: 2em;
+  color: #555;
 }`;
   zip.addFile('OEBPS/styles.css', Buffer.from(stylesCss));
 

@@ -444,6 +444,20 @@ createApp({
       if (coverInput.value) coverInput.value.value = '';
     }
 
+    // Get cover image URL
+    function getCoverUrl() {
+      if (!bookMeta.value.cover) return '';
+      return `/uploads/${currentBookId.value}/${bookMeta.value.cover.replace('images/', '')}`;
+    }
+
+    // Remove cover
+    async function removeCover() {
+      if (!currentBookId.value) return;
+      bookMeta.value.cover = '';
+      await updateMeta();
+      showStatus('Cover removed', 'success');
+    }
+
     // Insert text at cursor position
     function insertTextAtCursor(text) {
       if (!editor.value) return;
@@ -612,6 +626,8 @@ createApp({
       onPaste,
       uploadImage,
       uploadCover,
+      getCoverUrl,
+      removeCover,
       openImageGallery,
       insertImageFromGallery,
       deleteImage,

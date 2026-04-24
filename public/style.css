@@ -288,6 +288,46 @@ body {
   font-weight: bold;
 }
 
+.cover-preview-container {
+  position: relative;
+  display: inline-block;
+}
+
+.cover-thumbnail {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.btn-remove-cover {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-remove-cover:hover {
+  background: #c82333;
+}
+
+.cover-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
 /* Editor Panes */
 .editor-panes {
   flex: 1;

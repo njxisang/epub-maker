@@ -94,7 +94,11 @@
           <label class="cover-upload">
             Cover:
             <input type="file" @change="uploadCover" accept="image/*" ref="coverInput">
-            <span v-if="bookMeta.cover" class="cover-preview">✓</span>
+            <div v-if="bookMeta.cover" class="cover-preview-container">
+              <img :src="getCoverUrl()" class="cover-thumbnail">
+              <button @click.stop="removeCover" class="btn-remove-cover" title="Remove cover">×</button>
+            </div>
+            <span v-else class="cover-placeholder">No cover</span>
           </label>
         </div>
 
