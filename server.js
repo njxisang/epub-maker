@@ -729,7 +729,7 @@ footer {
   const epubBuffer = zip.toBuffer();
 
   res.setHeader('Content-Type', 'application/epub+zip');
-  res.setHeader('Content-Disposition', `attachment; filename="${title}.epub"`);
+  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(title)}.epub`);
   res.send(epubBuffer);
 });
 
