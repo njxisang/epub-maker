@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPUB Maker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Markdown-it -->
+  <script src="https://unpkg.com/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+  <!-- Highlight.js for markdown-it -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <!-- Sortable.js for drag and drop -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">📖 EPUB Maker</span>
+      </div>
+      <div class="header-center">
+        <select v-if="books.length > 0" v-model="currentBookId" @change="switchBook" class="book-select">
+          <option v-for="book in books" :key="book.id" :value="book.id">{{ book.title }}</option>
+        </select>
+        <span v-else class="no-book">No books yet</span>
+      </div>
+      <div class="header-right">
+        <button @click="showNewBookModal = true" class="btn btn-primary">+ New Book</button>
+        <button @click="exportEpub" :disabled="!currentBookId || chapters.length === 0" class="btn btn-success">Export EPUB</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+      <!-- Left Sidebar -->
+      <aside class="sidebar">
+        <!-- Books List -->
+        <div class="books-section">
+          <h3 class="section-title">📚 Books</h3>
+          <div class="books-list">
+            <div
+              v-for="book in books"
+              :key="book.id"
+              class="book-item"
+              :class="{ active: book.id === currentBookId }"
+              @click="selectBook(book.id)"
+              @contextmenu.prevent="showBookMenu($event, book)"
+            >
+              <span class="book-icon">📖</span>
+              <span class="book-title">{{ book.title }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapters List -->
+        <div class="chapters-section">
+          <h3 class="section-title">📑 Chapters</h3>
+          <button @click="createChapter" :disabled="!currentBookId" class="btn btn-small">+ New Chapter</button>
+          <div id="chapters-list" class="chapters-list">
+            <div
+              v-for="chapter in chapters"
+              :key="chapter.id"
+              class="chapter-item"
+              :class="{ active: chapter.id === currentChapterId }"
+              draggable="true"
+              @click="selectChapter(chapter.id)"
+            >
+              <span class="drag-handle">⋮⋮</span>
+              <span class="chapter-title">{{ chapter.title }}</span>
+              <button @click.stop="deleteChapter(chapter.id)" class="btn-delete" title="Delete">×</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Editor Area -->
+      <main class="editor-area" v-if="currentBookId">
+        <!-- Metadata Bar -->
+        <div class="metadata-bar">
+          <label>
+            Title:
+            <input type="text" v-model="bookMeta.title" @change="updateMeta" placeholder="Book title" class="meta-input">
+          </label>
+          <label>
+            Author:
+            <input type="text" v-model="bookMeta.author" @change="updateMeta" placeholder="Author name" class="meta-input">
+          </label>
+          <label class="cover-upload">
+            Cover:
+            <input type="file" @change="uploadCover" accept="image/*" ref="coverInput">
+            <span v-if="bookMeta.cover" class="cover-preview">✓</span>
+          </label>
+        </div>
+
+        <!-- Editor Panes -->
+        <div class="editor-panes">
+          <!-- Chapter Title -->
+          <div class="chapter-header">
+            <input
+              type="text"
+              v-model="currentChapterTitle"
+              @change="updateChapterTitle"
+              placeholder="Chapter Title"
+              class="chapter-title-input"
+            >
+          </div>
+
+          <!-- Markdown Editor -->
+          <div class="pane editor-pane">
+            <div class="pane-header">
+              <span>Markdown</span>
+              <label class="image-upload-btn">
+                📷
+                <input type="file" @change="uploadImage" accept="image/*" ref="imageInput">
+              </label>
+            </div>
+            <textarea
+              ref="editor"
+              v-model="editorContent"
+              @input="onEditorInput"
+              @paste="onPaste"
+              placeholder="Write your chapter content here..."
+              class="markdown-editor"
+            ></textarea>
+          </div>
+
+          <!-- Preview -->
+          <div class="pane preview-pane">
+            <div class="pane-header">Preview</div>
+            <div ref="preview" class="markdown-preview" v-html="previewHtml"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Empty State -->
+      <main class="editor-area empty-state" v-else>
+        <div class="empty-message">
+          <p>📖 Select a book or create a new one to get started</p>
+          <button @click="showNewBookModal = true" class="btn btn-primary">+ Create New Book</button>
+        </div>
+      </main>
+    </div>
+
+    <!-- New Book Modal -->
+    <div v-if="showNewBookModal" class="modal-overlay" @click.self="showNewBookModal = false">
+      <div class="modal">
+        <h3>Create New Book</h3>
+        <input
+          type="text"
+          v-model="newBookTitle"
+          @keyup.enter="createBook"
+          placeholder="Enter book title"
+          class="modal-input"
+          ref="newBookInput"
+        >
+        <div class="modal-actions">
+          <button @click="showNewBookModal = false" class="btn">Cancel</button>
+          <button @click="createBook" :disabled="!newBookTitle.trim()" class="btn btn-primary">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Context Menu -->
+    <div
+      v-if="showContextMenu"
+      class="context-menu"
+      :style="{ top: contextMenuY + 'px', left: contextMenuX + 'px' }"
+    >
+      <button @click="deleteCurrentBook">Delete Book</button>
+    </div>
+
+    <!-- Status Message -->
+    <div v-if="statusMessage" class="status-toast" :class="statusType">
+      {{ statusMessage }}
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

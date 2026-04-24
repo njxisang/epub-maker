@@ -1,0 +1,18 @@
+{
+  "name": "epub-maker",
+  "version": "1.0.0",
+  "description": "Personal e-book creation tool - Write in Markdown, export to EPUB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "adm-zip": "^0.5.10",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.0",
+    "markdown-it": "^14.1.0",
+    "highlight.js": "^11.9.0"
+  }
+}
