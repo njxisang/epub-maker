@@ -18,7 +18,6 @@ const BOOKS_INDEX = path.join(DATA_DIR, 'books.json');
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(BOOKS_DIR)) fs.mkdirSync(BOOKS_DIR, { recursive: true });
-if (!fs.existsSync(path.join(BOOKS_DIR))) fs.mkdirSync(path.join(BOOKS_DIR), { recursive: true });
 
 // Initialize books index
 if (!fs.existsSync(BOOKS_INDEX)) {
@@ -375,8 +374,27 @@ app.get('/api/books/:id/images', (req, res) => {
   res.json(files);
 });
 
+// DELETE /api/books/:id/images/:filename - Delete image
+app.delete('/api/books/:id/images/:filename', (req, res) => {
+  const { id, filename } = req.params;
+  const filePath = path.join(getBookDir(id), 'images', filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+
+  fs.unlinkSync(filePath);
+  res.json({ success: true });
+});
+
 // Serve uploaded images
-app.use('/uploads/:id/images', express.static(path.join(BOOKS_DIR, ':id', 'images')));
+app.get('/uploads/:id/:filename', (req, res) => {
+  const filePath = path.join(BOOKS_DIR, req.params.id, 'images', req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Image not found');
+  }
+  res.sendFile(filePath);
+});
 
 // ============ EPUB EXPORT ============
 

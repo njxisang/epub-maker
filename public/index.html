@@ -115,10 +115,13 @@
           <div class="pane editor-pane">
             <div class="pane-header">
               <span>Markdown</span>
-              <label class="image-upload-btn">
-                📷
-                <input type="file" @change="uploadImage" accept="image/*" ref="imageInput">
-              </label>
+              <div class="pane-actions">
+                <label class="image-upload-btn" title="Upload Image">
+                  📷
+                  <input type="file" @change="uploadImage" accept="image/*" ref="imageInput">
+                </label>
+                <button @click="openImageGallery" class="image-gallery-btn" title="Image Library">🖼</button>
+              </div>
             </div>
             <textarea
               ref="editor"
@@ -134,6 +137,25 @@
           <div class="pane preview-pane">
             <div class="pane-header">Preview</div>
             <div ref="preview" class="markdown-preview" v-html="previewHtml"></div>
+          </div>
+        </div>
+
+        <!-- Image Gallery Toggle -->
+        <div v-if="showImageGallery" class="modal-overlay" @click.self="showImageGallery = false">
+          <div class="modal image-gallery-modal">
+            <div class="modal-header">
+              <h3>Image Library</h3>
+              <button @click="showImageGallery = false" class="btn-close">×</button>
+            </div>
+            <div class="image-gallery-grid" v-if="bookImages.length > 0">
+              <div v-for="img in bookImages" :key="img.filename" class="image-gallery-item">
+                <img :src="img.url" @click="insertImageFromGallery(img)" :alt="img.filename">
+                <button @click.stop="deleteImage(img.filename)" class="btn-delete-img" title="Delete">×</button>
+              </div>
+            </div>
+            <div v-else class="image-gallery-empty">
+              <p>No images uploaded yet</p>
+            </div>
           </div>
         </div>
       </main>

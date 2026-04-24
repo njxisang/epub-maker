@@ -357,6 +357,24 @@ body {
   display: none;
 }
 
+.image-gallery-btn {
+  background: var(--bg-tertiary);
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.image-gallery-btn:hover {
+  background: var(--border-color);
+}
+
+.pane-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .image-upload-btn:hover {
   background: var(--border-color);
 }
@@ -563,6 +581,79 @@ body {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+}
+
+.image-gallery-modal {
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.image-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  overflow-y: auto;
+  max-height: 60vh;
+  padding: 0.5rem;
+}
+
+.image-gallery-item {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1;
+}
+
+.image-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-gallery-item .btn-delete-img {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-gallery-item:hover .btn-delete-img {
+  opacity: 1;
+}
+
+.image-gallery-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
 }
 
 /* Scrollbar */

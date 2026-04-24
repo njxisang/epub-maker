@@ -78,6 +78,8 @@ createApp({
     const contextMenuBook = ref(null);
     const statusMessage = ref('');
     const statusType = ref('info');
+    const showImageGallery = ref(false);
+    const bookImages = ref([]);
 
     // Refs
     const newBookInput = ref(null);
@@ -134,7 +136,7 @@ createApp({
 
     async function apiUpload(url, file) {
       const formData = new FormData();
-      formData.append(file.fieldName || 'image', file);
+      formData.append('image', file);
       const res = await fetch(url, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`Upload error: ${res.status}`);
       return res.json();
@@ -375,6 +377,42 @@ createApp({
       if (imageInput.value) imageInput.value.value = '';
     }
 
+    // Load book images
+    async function loadBookImages() {
+      if (!currentBookId.value) return;
+      try {
+        bookImages.value = await apiGet(`/api/books/${currentBookId.value}/images`);
+      } catch (e) {
+        console.error('Failed to load images:', e);
+      }
+    }
+
+    // Open image gallery
+    async function openImageGallery() {
+      await loadBookImages();
+      showImageGallery.value = true;
+    }
+
+    // Insert image from gallery
+    function insertImageFromGallery(img) {
+      const imageMarkdown = `![${img.filename}](${img.url})`;
+      insertTextAtCursor(imageMarkdown);
+      onEditorInput();
+      showImageGallery.value = false;
+    }
+
+    // Delete image
+    async function deleteImage(filename) {
+      if (!confirm(`Delete image "${filename}"?`)) return;
+      try {
+        await apiDelete(`/api/books/${currentBookId.value}/images/${filename}`);
+        bookImages.value = bookImages.value.filter(img => img.filename !== filename);
+        showStatus('Image deleted', 'success');
+      } catch (e) {
+        showStatus('Failed to delete image: ' + e.message, 'error');
+      }
+    }
+
     // Upload cover
     async function uploadCover(e) {
       const file = e.target.files?.[0];
@@ -538,6 +576,8 @@ createApp({
       contextMenuY,
       statusMessage,
       statusType,
+      showImageGallery,
+      bookImages,
       // Refs
       newBookInput,
       editor,
@@ -557,6 +597,9 @@ createApp({
       onPaste,
       uploadImage,
       uploadCover,
+      openImageGallery,
+      insertImageFromGallery,
+      deleteImage,
       exportEpub,
       showBookMenu,
       deleteCurrentBook
