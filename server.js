@@ -534,6 +534,26 @@ app.get('/api/books/:id/export', async (req, res) => {
     // Convert markdown to HTML
     let htmlContent = md.render(mdContent);
 
+    // ===== Enhanced Text Formatting (post-processing) =====
+
+    // Superscript: ^text^
+    htmlContent = htmlContent.replace(/\^([^^]+)\^/g, '<sup>$1</sup>');
+
+    // Subscript: ~text~
+    htmlContent = htmlContent.replace(/~([^~]+)~/g, '<sub>$1</sub>');
+
+    // Colored text: @@COLOR:red@@text@@ or @@COLOR:#ff0000@@text@@
+    htmlContent = htmlContent.replace(/@@COLOR:([^@]+)@@([^@]+)@@/g, (match, color, text) => {
+      return `<span style="color:${color}">${text}</span>`;
+    });
+
+    // Highlighted text: @@BG:yellow@@text@@ or @@BG:#ffff00@@text@@
+    htmlContent = htmlContent.replace(/@@BG:([^@]+)@@([^@]+)@@/g, (match, bg, text) => {
+      return `<span style="background-color:${bg}">${text}</span>`;
+    });
+
+    // ===== End Enhanced Text Formatting =====
+
     // Add footnote section if there are footnotes
     if (footnotes.length > 0) {
       const footnoteHtml = footnotes.map(fn =>
@@ -783,8 +803,11 @@ li {
 table {
   border-collapse: collapse;
   width: 100%;
-  margin: 1.5em 0;
+  margin: 1.5em auto;
   font-size: 0.95em;
+  table-layout: fixed;
+  overflow-x: auto;
+  display: block;
 }
 
 th, td {
@@ -792,6 +815,8 @@ th, td {
   padding: 0.6em 1em;
   text-align: left;
   vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 th {
@@ -804,12 +829,56 @@ tr:nth-child(even) {
   background-color: #fafaf8;
 }
 
+tr:nth-child(odd) {
+  background-color: #fff;
+}
+}
+
 /* Images */
 img {
   max-width: 100%;
+  max-height: 80vh;
+  width: auto;
   height: auto;
   display: block;
   margin: 1.5em auto;
+  object-fit: contain;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5em auto;
+  font-size: 0.95em;
+  table-layout: fixed;
+  overflow-x: auto;
+  display: block;
+}
+
+th, td {
+  border: 1px solid #d0d0d0;
+  padding: 0.6em 1em;
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+th {
+  background-color: #f5f3f0;
+  font-weight: bold;
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background-color: #fafaf8;
+}
+
+/* Table scroll container for narrow screens */
+table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Horizontal rules */
@@ -860,6 +929,57 @@ strong {
 
 em {
   font-style: italic;
+}
+
+del {
+  text-decoration: line-through;
+}
+
+u {
+  text-decoration: underline;
+}
+
+/* Superscript and Subscript */
+sup {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+sub {
+  font-size: 0.75em;
+  vertical-align: sub;
+  line-height: 0;
+}
+
+/* Text colors */
+.text-red { color: #dc3545; }
+.text-orange { color: #fd7e14; }
+.text-yellow { color: #ffc107; }
+.text-green { color: #28a745; }
+.text-blue { color: #007bff; }
+.text-purple { color: #6f42c1; }
+.text-pink { color: #e83e8c; }
+.text-gray { color: #6c757d; }
+.text-black { color: #000000; }
+.text-white { color: #ffffff; }
+
+/* Background colors */
+.bg-yellow { background-color: #fff3cd; }
+.bg-green { background-color: #d4edda; }
+.bg-blue { background-color: #cce5ff; }
+.bg-red { background-color: #f8d7da; }
+.bg-gray { background-color: #e9ecef; }
+
+/* Inline mark/highlight */
+mark {
+  background-color: #fff3cd;
+  padding: 0.1em 0.2em;
+}
+
+span[style*="background-color"] {
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
 }
 
 /* Small caps effect via CSS */
