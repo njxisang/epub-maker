@@ -517,6 +517,54 @@ body {
   margin-bottom: 1rem;
 }
 
+.template-section {
+  margin-bottom: 1rem;
+}
+
+.template-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.template-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.template-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.template-option:hover {
+  background: var(--bg-secondary);
+}
+
+.template-option input[type="radio"] {
+  margin-right: 0.5rem;
+}
+
+.template-option input[type="radio"]:checked + .template-icon + .template-name {
+  color: var(--accent-color);
+}
+
+.template-icon {
+  margin-right: 0.25rem;
+}
+
+.template-name {
+  font-weight: 500;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

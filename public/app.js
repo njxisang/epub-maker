@@ -72,6 +72,7 @@ createApp({
     // UI State
     const showNewBookModal = ref(false);
     const newBookTitle = ref('');
+    const newBookTemplate = ref('blank');
     const showContextMenu = ref(false);
     const contextMenuX = ref(0);
     const contextMenuY = ref(0);
@@ -80,6 +81,14 @@ createApp({
     const statusType = ref('info');
     const showImageGallery = ref(false);
     const bookImages = ref([]);
+
+    // Book templates
+    const bookTemplates = [
+      { value: 'blank', name: 'Blank', icon: '📄' },
+      { value: 'novel', name: 'Novel', icon: '📚' },
+      { value: 'thesis', name: 'Thesis', icon: '🎓' },
+      { value: 'poetry', name: 'Poetry', icon: '📝' }
+    ];
 
     // Refs
     const newBookInput = ref(null);
@@ -165,11 +174,15 @@ createApp({
     async function createBook() {
       if (!newBookTitle.value.trim()) return;
       try {
-        const book = await apiPost('/api/books', { title: newBookTitle.value.trim() });
+        const book = await apiPost('/api/books', {
+          title: newBookTitle.value.trim(),
+          template: newBookTemplate.value
+        });
         books.value.unshift({ id: book.id, title: book.title, path: `books/${book.id}/`, updatedAt: book.updatedAt });
         await selectBook(book.id);
         showNewBookModal.value = false;
         newBookTitle.value = '';
+        newBookTemplate.value = 'blank';
         showStatus('Book created!', 'success');
       } catch (e) {
         showStatus('Failed to create book: ' + e.message, 'error');
@@ -571,6 +584,8 @@ createApp({
       previewHtml,
       showNewBookModal,
       newBookTitle,
+      newBookTemplate,
+      bookTemplates,
       showContextMenu,
       contextMenuX,
       contextMenuY,

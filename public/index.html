@@ -181,6 +181,16 @@
           class="modal-input"
           ref="newBookInput"
         >
+        <div class="template-section">
+          <label>Template:</label>
+          <div class="template-options">
+            <label v-for="tpl in bookTemplates" :key="tpl.value" class="template-option">
+              <input type="radio" v-model="newBookTemplate" :value="tpl.value">
+              <span class="template-icon">{{ tpl.icon }}</span>
+              <span class="template-name">{{ tpl.name }}</span>
+            </label>
+          </div>
+        </div>
         <div class="modal-actions">
           <button @click="showNewBookModal = false" class="btn">Cancel</button>
           <button @click="createBook" :disabled="!newBookTitle.trim()" class="btn btn-primary">Create</button>

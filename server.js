@@ -96,15 +96,50 @@ function saveChaptersJson(bookId, chapters) {
 
 // GET /api/books - List all books
 app.get('/api/books', (req, res) => {
-  const books = getBooksIndex();
+  let books = getBooksIndex();
+  // Filter out orphaned entries (books whose directories no longer exist)
+  books = books.filter(b => fs.existsSync(getBookDir(b.id)));
   // Sort by updatedAt descending (most recent first)
   books.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   res.json(books);
 });
 
+// Book templates
+const BOOK_TEMPLATES = {
+  blank: {
+    chapters: []
+  },
+  novel: {
+    chapters: [
+      { title: '第一章 序幕', content: '# 第一章 序幕\n\n故事从这里开始。\n\n' },
+      { title: '第二章 发展', content: '# 第二章 发展\n\n情节逐渐展开。\n\n' },
+      { title: '第三章 高潮', content: '# 第三章 高潮\n\n故事达到顶点。\n\n' },
+      { title: '第四章 结局', content: '# 第四章 结局\n\n故事迎来尾声。\n\n' }
+    ]
+  },
+  thesis: {
+    chapters: [
+      { title: '摘要', content: '# 摘要\n\n本文研究了...。\n\n' },
+      { title: '第一章 引言', content: '# 第一章 引言\n\n1.1 研究背景\n\n国内外研究现状表明...。\n\n1.2 研究意义\n\n本研究具有重要的理论价值和实践意义。\n\n' },
+      { title: '第二章 理论框架', content: '# 第二章 理论框架\n\n2.1 核心概念\n\n本研究所涉及的核心概念包括...。\n\n2.2 理论基础\n\n本研究的理论基础是...。\n\n' },
+      { title: '第三章 研究方法', content: '# 第三章 研究方法\n\n3.1 研究设计\n\n本研究采用...方法。\n\n\n3.2 数据收集\n\n数据来源于...。\n\n' },
+      { title: '第四章 结论', content: '# 第四章 结论\n\n本研究的主要结论是...。\n\n' },
+      { title: '参考文献', content: '# 参考文献\n\n[1] 作者. 题目. 期刊, 年份.\n\n' }
+    ]
+  },
+  poetry: {
+    chapters: [
+      { title: '第一篇 春', content: '# 春\n\n春风拂面万物苏，\n桃花盛开映山红。\n\n' },
+      { title: '第二篇 夏', content: '# 夏\n\n烈日炎炎照大地，\n蝉鸣声声入梦来。\n\n' },
+      { title: '第三篇 秋', content: '# 秋\n\n金风送爽叶飘零，\n丰收季节喜盈盈。\n\n' },
+      { title: '第四篇 冬', content: '# 冬\n\n白雪皑皑覆山川，\n寒梅傲雪独自开。\n\n' }
+    ]
+  }
+};
+
 // POST /api/books - Create new book
 app.post('/api/books', (req, res) => {
-  const { title } = req.body;
+  const { title, template = 'blank' } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
   const id = uuidv4();
@@ -127,8 +162,22 @@ app.post('/api/books', (req, res) => {
   };
   fs.writeFileSync(path.join(bookDir, 'meta.json'), JSON.stringify(meta, null, 2));
 
-  // Create empty chapters.json
-  saveChaptersJson(id, []);
+  // Create chapters from template
+  const templateData = BOOK_TEMPLATES[template] || BOOK_TEMPLATES.blank;
+  const chapters = [];
+  templateData.chapters.forEach((ch, idx) => {
+    const chapterId = `chapter-${idx + 1}`;
+    const fileName = `${chapterId}.md`;
+    const filePath = path.join(bookDir, 'chapters', fileName);
+    fs.writeFileSync(filePath, ch.content);
+    chapters.push({
+      id: chapterId,
+      title: ch.title,
+      file: `chapters/${fileName}`,
+      order: idx + 1
+    });
+  });
+  saveChaptersJson(id, chapters);
 
   // Update books index
   const books = getBooksIndex();
